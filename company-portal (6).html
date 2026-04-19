@@ -1,0 +1,2066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexCore Portal — Secure Access</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   EMAILJS CONFIG — REPLACE THESE VALUES
+   ============================================================ */
+/*
+  EMAILJS_PUBLIC_KEY    = "YOUR_PUBLIC_KEY"
+  EMAILJS_SERVICE_ID    = "YOUR_SERVICE_ID"
+  EMAILJS_OTP_TEMPLATE  = "YOUR_OTP_TEMPLATE_ID"
+  EMAILJS_ADMIN_TEMPLATE= "YOUR_ADMIN_TEMPLATE_ID"
+  ADMIN_EMAIL           = "nithish0207c@gmail.com"
+*/
+
+:root {
+  --bg: #080c14;
+  --surface: rgba(255,255,255,0.03);
+  --surface-hover: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border-active: rgba(99,179,237,0.5);
+  --accent: #63b3ed;
+  --accent2: #9f7aea;
+  --accent3: #68d391;
+  --text: #e8edf5;
+  --text-dim: #8896a9;
+  --text-faint: #4a5568;
+  --error: #fc8181;
+  --success: #68d391;
+  --warning: #f6ad55;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.1);
+  --shadow: 0 24px 64px rgba(0,0,0,0.6);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,179,237,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(159,122,234,0.07) 0%, transparent 60%),
+    #080c14;
+}
+
+/* ---- GRID NOISE TEXTURE ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   PAGES & ROUTING
+   ============================================================ */
+.page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  overflow-y: auto;
+  padding: 20px;
+}
+.page.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ============================================================
+   AUTH CARD
+   ============================================================ */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 44px 40px;
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,179,237,0.6), transparent);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 16px rgba(99,179,237,0.3);
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+  font-weight: 300;
+}
+
+/* ---- FORM ELEMENTS ---- */
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-wrap input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+
+.input-wrap input:focus {
+  border-color: var(--border-active);
+  background: rgba(99,179,237,0.04);
+  box-shadow: 0 0 0 3px rgba(99,179,237,0.08);
+}
+
+.input-wrap input::placeholder { color: var(--text-faint); }
+
+.toggle-pw {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+.toggle-pw:hover { color: var(--accent); }
+
+/* ---- BUTTONS ---- */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(99,179,237,0.25);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(99,179,237,0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.btn-ghost:hover { background: var(--surface-hover); color: var(--text); }
+
+.btn-social {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  padding: 11px 16px;
+}
+.btn-social:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ---- DIVIDER ---- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---- SOCIAL ROW ---- */
+.social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* ---- CHECKBOX ---- */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.check-row input[type=checkbox] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.check-row label {
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ---- LINKS ---- */
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.auth-link {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.auth-link:hover { color: #90cdf4; }
+
+.forgot-link {
+  text-align: right;
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+/* ---- OTP INPUTS ---- */
+.otp-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+.otp-box {
+  width: 48px;
+  height: 56px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 22px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--accent);
+}
+.otp-box:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(99,179,237,0.1);
+}
+.otp-box.filled {
+  border-color: rgba(99,179,237,0.4);
+  background: rgba(99,179,237,0.05);
+}
+
+/* ---- TIMER ---- */
+.otp-timer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+  margin-bottom: 10px;
+}
+.otp-timer span { color: var(--accent); font-weight: 500; }
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  display: block;
+  margin: 4px auto 16px;
+  transition: color 0.2s;
+}
+.resend-btn:disabled { color: var(--text-faint); cursor: not-allowed; }
+.resend-btn:not(:disabled):hover { color: #90cdf4; }
+
+/* ---- MESSAGES ---- */
+.msg {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+.msg.show { display: flex; }
+.msg-error { background: rgba(252,129,129,0.1); border: 1px solid rgba(252,129,129,0.2); color: var(--error); }
+.msg-success { background: rgba(104,211,145,0.1); border: 1px solid rgba(104,211,145,0.2); color: var(--success); }
+.msg-info { background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); color: var(--accent); }
+
+/* ---- LOADING SPINNER ---- */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.loading .spinner { display: block; }
+.loading .btn-text { display: none; }
+
+/* ---- GLOBAL LOADER ---- */
+#global-loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.4s ease;
+}
+#global-loader.hidden { opacity: 0; pointer-events: none; }
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99,179,237,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+#dashboard-page {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  background: var(--bg);
+}
+#dashboard-page.active { display: flex; }
+
+.dash-bar {
+  height: 52px;
+  background: rgba(8,12,20,0.95);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.dash-brand .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s infinite;
+}
+
+.dash-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.dash-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.btn-logout {
+  padding: 7px 16px;
+  background: rgba(252,129,129,0.08);
+  border: 1px solid rgba(252,129,129,0.2);
+  color: var(--error);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-logout:hover { background: rgba(252,129,129,0.15); }
+
+.dash-frame-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#secure-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.frame-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card { animation: slideUp 0.5s ease; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 480px) {
+  .auth-card { padding: 32px 24px; border-radius: 20px; }
+  .auth-title { font-size: 22px; }
+  .otp-box { width: 40px; height: 50px; font-size: 18px; }
+  .social-row { grid-template-columns: 1fr; }
+}
+
+/* ---- PASSWORD STRENGTH ---- */
+.pw-strength {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  margin-top: 8px;
+  overflow: hidden;
+}
+.pw-strength-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+  width: 0%;
+}
+
+.step-indicator {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+.step-dot {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.step-dot.active { background: var(--accent); }
+.step-dot.done { background: var(--success); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     GLOBAL LOADER
+     ============================================================ -->
+<div id="global-loader">
+  <div class="loader-spinner"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: LOGIN
+     ============================================================ -->
+<div class="page active" id="page-login">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-name">NexCore</div>
+    </div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Sign in to your secure portal</p>
+
+    <div class="social-row">
+      <button class="btn btn-social" onclick="socialLogin('Google')">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+      <button class="btn btn-social" onclick="socialLogin('Facebook')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Facebook
+      </button>
+      <button class="btn btn-social" onclick="socialLogin('Apple')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.39 1.39-2.38 4.16.01 3.31 2.9 4.41 2.94 4.43-.03.07-.45 1.56-1.31 3.03M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Apple
+      </button>
+    </div>
+
+    <div class="divider">or continue with email</div>
+
+    <div id="login-msg" class="msg"></div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <div class="input-wrap">
+        <input type="email" id="login-email" placeholder="you@company.com" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        <button class="toggle-pw" onclick="togglePw('login-password', this)" type="button">👁</button>
+      </div>
+    </div>
+
+    <div class="check-row">
+      <input type="checkbox" id="remember-me">
+      <label for="remember-me">Remember me for 30 days</label>
+      <span style="flex:1"></span>
+      <a class="auth-link" onclick="showPage('page-forgot')">Forgot password?</a>
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">
+      <div class="spinner"></div>
+      <span class="btn-text">Sign In →</span>
+    </button>
+
+    <div class="auth-footer">
+      Don't have an account? <a class="auth-link" onclick="showPage('page-signup')">Create one</a>
+    </div>
+    <div style="text-align:center;margin-top:12px;">
+      <button onclick="showDebugPanel()" style="background:none;border:none;color:#2d3748;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.5px;" title="Debug storage">⬡ storage debug</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: LOGIN OTP
+     ============================================================ -->
+<div class="page" id="page-login-otp">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-name">NexCore</div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <h1 class="auth-title">Verify identity</h1>
+    <p class="auth-subtitle" id="login-otp-hint">A 6-digit code was sent to your email</p>
+
+    <div id="login-otp-msg" class="msg"></div>
+
+    <div class="otp-row" id="login-otp-row">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+    </div>
+
+    <div class="otp-timer" id="login-otp-timer">Code expires in <span id="login-otp-countdown">10:00</span></div>
+    <button class="resend-btn" id="login-resend-btn" disabled onclick="resendOtp('login')">Resend code</button>
+
+    <button class="btn btn-primary" id="login-otp-btn" onclick="verifyLoginOtp()">
+      <div class="spinner"></div>
+      <span class="btn-text">Verify & Enter →</span>
+    </button>
+    <div class="auth-footer">
+      <a class="auth-link" onclick="showPage('page-login')">← Back to sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: SIGN UP
+     ============================================================ -->
+<div class="page" id="page-signup">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-name">NexCore</div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-subtitle">Join your team's secure portal</p>
+
+    <div id="signup-msg" class="msg"></div>
+
+    <div class="field">
+      <label>Full Name</label>
+      <div class="input-wrap">
+        <input type="text" id="signup-name" placeholder="Jane Smith" autocomplete="name">
+      </div>
+    </div>
+    <div class="field">
+      <label>Work Email</label>
+      <div class="input-wrap">
+        <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
+      </div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input type="password" id="signup-password" placeholder="••••••••" oninput="checkPwStrength(this, 'signup-strength-bar')" autocomplete="new-password">
+        <button class="toggle-pw" onclick="togglePw('signup-password', this)" type="button">👁</button>
+      </div>
+      <div class="pw-strength"><div class="pw-strength-bar" id="signup-strength-bar"></div></div>
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label>Confirm Password</label>
+      <div class="input-wrap">
+        <input type="password" id="signup-confirm" placeholder="••••••••" autocomplete="new-password">
+        <button class="toggle-pw" onclick="togglePw('signup-confirm', this)" type="button">👁</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="signup-btn" onclick="handleSignup()">
+      <div class="spinner"></div>
+      <span class="btn-text">Continue →</span>
+    </button>
+    <div class="auth-footer">
+      Already have an account? <a class="auth-link" onclick="showPage('page-login')">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: SIGNUP OTP
+     ============================================================ -->
+<div class="page" id="page-signup-otp">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-name">NexCore</div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <h1 class="auth-title">Verify your email</h1>
+    <p class="auth-subtitle" id="signup-otp-hint">Enter the code we sent you</p>
+
+    <div id="signup-otp-msg" class="msg"></div>
+
+    <div class="otp-row" id="signup-otp-row">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+    </div>
+
+    <div class="otp-timer">Code expires in <span id="signup-otp-countdown">10:00</span></div>
+    <button class="resend-btn" id="signup-resend-btn" disabled onclick="resendOtp('signup')">Resend code</button>
+
+    <button class="btn btn-primary" id="signup-otp-btn" onclick="verifySignupOtp()">
+      <div class="spinner"></div>
+      <span class="btn-text">Create Account →</span>
+    </button>
+    <div class="auth-footer">
+      <a class="auth-link" onclick="showPage('page-signup')">← Back</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: FORGOT PASSWORD
+     ============================================================ -->
+<div class="page" id="page-forgot">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-name">NexCore</div>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active" id="forgot-step1"></div>
+      <div class="step-dot" id="forgot-step2"></div>
+      <div class="step-dot" id="forgot-step3"></div>
+    </div>
+    <h1 class="auth-title">Reset password</h1>
+    <p class="auth-subtitle">We'll send a recovery code to your email</p>
+
+    <div id="forgot-msg" class="msg"></div>
+
+    <!-- Step 1: Email -->
+    <div id="forgot-step-email">
+      <div class="field">
+        <label>Registered Email</label>
+        <div class="input-wrap">
+          <input type="email" id="forgot-email" placeholder="you@company.com">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="forgot-btn" onclick="handleForgot()">
+        <div class="spinner"></div>
+        <span class="btn-text">Send Reset Code →</span>
+      </button>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div id="forgot-step-otp" style="display:none">
+      <div class="otp-row" id="forgot-otp-row">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <div class="otp-timer">Expires in <span id="forgot-otp-countdown">10:00</span></div>
+      <button class="resend-btn" id="forgot-resend-btn" disabled onclick="resendOtp('forgot')">Resend code</button>
+      <button class="btn btn-primary" id="forgot-otp-btn" onclick="verifyForgotOtp()">
+        <div class="spinner"></div>
+        <span class="btn-text">Verify Code →</span>
+      </button>
+    </div>
+
+    <!-- Step 3: New password -->
+    <div id="forgot-step-pw" style="display:none">
+      <div class="field">
+        <label>New Password</label>
+        <div class="input-wrap">
+          <input type="password" id="forgot-new-pw" placeholder="••••••••" oninput="checkPwStrength(this, 'forgot-strength-bar')">
+          <button class="toggle-pw" onclick="togglePw('forgot-new-pw', this)" type="button">👁</button>
+        </div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="forgot-strength-bar"></div></div>
+      </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>Confirm New Password</label>
+        <div class="input-wrap">
+          <input type="password" id="forgot-confirm-pw" placeholder="••••••••">
+          <button class="toggle-pw" onclick="togglePw('forgot-confirm-pw', this)" type="button">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="forgot-reset-btn" onclick="handlePasswordReset()">
+        <div class="spinner"></div>
+        <span class="btn-text">Reset Password →</span>
+      </button>
+    </div>
+
+    <div class="auth-footer">
+      <a class="auth-link" onclick="showPage('page-login')">← Back to sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DASHBOARD
+     ============================================================ -->
+<div id="dashboard-page">
+  <div class="dash-bar">
+    <div class="dash-brand">
+      <span>⬡ NexCore</span>
+      <div class="dot"></div>
+      <span style="font-size:12px;font-weight:400;color:var(--text-dim)">Secure Session</span>
+    </div>
+    <div class="dash-user">
+      <div class="dash-avatar" id="dash-avatar">?</div>
+      <span id="dash-username" style="font-size:13px;color:var(--text-dim)"></span>
+      <button class="btn-logout" onclick="handleLogout()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </div>
+  <div class="dash-frame-wrap">
+    <iframe id="secure-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-downloads" allow="fullscreen; downloads" title="Portal Content"></iframe>
+    <div class="frame-shield"></div>
+  <!-- Download Toast -->
+  <div id="download-toast" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,rgba(22,32,48,0.98),rgba(14,20,34,0.98));border:1px solid rgba(104,211,145,0.35);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6);backdrop-filter:blur(20px);transform:translateY(100px);opacity:0;transition:all 0.38s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;max-width:320px;">
+    <div style="width:36px;height:36px;background:rgba(104,211,145,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#68d391" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </div>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:13px;color:#e8edf5;" id="toast-title">Downloading file...</div>
+      <div style="font-size:11px;color:#68d391;margin-top:2px;" id="toast-sub">Your file is ready</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+"use strict";
+
+/* ============================================================
+   PASSWORD HASHING — reliable cross-session encoding
+   ============================================================ */
+function simpleHash(str) {
+  // Pure numeric hash — no btoa, no encodeURIComponent, guaranteed identical every time
+  str = (str || '').trim();
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'nx_' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/* ============================================================
+   DEBUG HELPER — logs to console only
+   ============================================================ */
+function debugLog(label, data) {
+  console.log('[NexCore]', label, data);
+}
+
+/* ============================================================
+   ★ EMAILJS CONFIG — REPLACE THESE VALUES ★
+   ============================================================ */
+const EMAILJS_PUBLIC_KEY     = "d3NnTkKyQ6nq5WWmp";
+const EMAILJS_SERVICE_ID     = "service_ov0espv";
+const EMAILJS_OTP_TEMPLATE   = "template_poew1wj";
+const EMAILJS_ADMIN_TEMPLATE = "template_f541zbr";
+const ADMIN_EMAIL            = "nithish0207c@gmail.com";
+const PORTAL_URL             = "https://sprightly-boba-9ab331.netlify.app";
+
+/* ============================================================
+   EMAILJS INIT
+   ============================================================ */
+(function initEmailJS() {
+  try {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  } catch (e) { console.warn("EmailJS init failed:", e); }
+})();
+
+/* ============================================================
+   OTP SESSIONS
+   ============================================================ */
+const otpSessions = {};
+
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function storeOtp(session, code, email) {
+  otpSessions[session] = {
+    code,
+    email,
+    expires: Date.now() + 10 * 60 * 1000
+  };
+}
+
+function validateOtp(session, entered) {
+  const s = otpSessions[session];
+  if (!s) return { ok: false, reason: "No OTP session found." };
+  if (Date.now() > s.expires) return { ok: false, reason: "OTP has expired. Please request a new one." };
+  if (s.code !== entered) return { ok: false, reason: "Incorrect OTP. Please try again." };
+  delete otpSessions[session];
+  return { ok: true };
+}
+
+/* ============================================================
+   EMAILJS SENDERS
+   ============================================================ */
+async function sendOtpEmail(toEmail, toName, otp, context) {
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_OTP_TEMPLATE, {
+      to_email: toEmail,
+      to_name: toName || toEmail,
+      otp_code: otp,
+      context: context,
+      company: "NexCore Portal"
+    });
+    return true;
+  } catch (e) {
+    console.error("OTP email failed:", e);
+    return false;
+  }
+}
+
+async function notifyAdmin(activity, details) {
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ADMIN_TEMPLATE, {
+      to_email: ADMIN_EMAIL,
+      activity: activity,
+      details: JSON.stringify(details, null, 2),
+      timestamp: new Date().toLocaleString(),
+      company: "NexCore Portal"
+    });
+  } catch (e) {
+    console.warn("Admin notify failed:", e);
+  }
+}
+
+/* ============================================================
+   STORAGE — uses localStorage + sessionStorage + in-memory
+   fallback so data persists even across file:// copies
+   ============================================================ */
+
+// In-memory cache (fast reads, survives same-tab reloads via sessionStorage seed)
+let _userCache = null;
+
+const STORAGE_KEY = "nexcore_users_v2";
+const SESSION_KEY = "nexcore_session_v2";
+const PENDING_KEY = "nexcore_pending_v2";
+
+function _readRaw(key) {
+  // Try localStorage first, then sessionStorage
+  try {
+    const v = localStorage.getItem(key);
+    if (v) return v;
+  } catch(e) {}
+  try {
+    const v = sessionStorage.getItem(key);
+    if (v) return v;
+  } catch(e) {}
+  return null;
+}
+
+function _writeRaw(key, value) {
+  let saved = false;
+  try { localStorage.setItem(key, value); saved = true; } catch(e) {}
+  try { sessionStorage.setItem(key, value); saved = true; } catch(e) {}
+  return saved;
+}
+
+function _removeRaw(key) {
+  try { localStorage.removeItem(key); } catch(e) {}
+  try { sessionStorage.removeItem(key); } catch(e) {}
+}
+
+function getUsers() {
+  if (_userCache !== null) return _userCache;
+  try {
+    const raw = _readRaw(STORAGE_KEY);
+    _userCache = raw ? JSON.parse(raw) : [];
+    console.log('[NexCore] getUsers from storage:', _userCache.length, 'users found');
+  } catch(e) {
+    console.log('[NexCore] getUsers ERROR:', e);
+    _userCache = [];
+  }
+  return _userCache;
+}
+
+function saveUsers(users) {
+  _userCache = users;
+  const str = JSON.stringify(users);
+  const saved = _writeRaw(STORAGE_KEY, str);
+  console.log('[NexCore] saveUsers: saved', users.length, 'users, storage write:', saved ? 'SUCCESS' : 'FAILED');
+  console.log('[NexCore] Saved emails:', users.map(u => u.email));
+  try {
+    document.documentElement.setAttribute("data-users", str);
+  } catch(e) {}
+}
+
+function getSession() {
+  try {
+    const raw = _readRaw(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function setSession(data) {
+  const val = JSON.stringify({ ...data, lastActivity: Date.now() });
+  _writeRaw(SESSION_KEY, val);
+}
+
+function clearSession() {
+  _removeRaw(SESSION_KEY);
+  _removeRaw(PENDING_KEY);
+}
+
+function getPendingLogin() {
+  try {
+    const raw = _readRaw(PENDING_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function setPendingLogin(data) {
+  _writeRaw(PENDING_KEY, JSON.stringify(data));
+}
+
+/* ============================================================
+   AUTO LOGOUT (10 min inactivity)
+   ============================================================ */
+const INACTIVITY_LIMIT = 10 * 60 * 1000;
+let inactivityTimer;
+
+function resetInactivity() {
+  clearTimeout(inactivityTimer);
+  const s = getSession();
+  if (!s) return;
+  setSession(s);
+  inactivityTimer = setTimeout(() => {
+    if (getSession()) {
+      notifyAdmin("Auto Logout - Inactivity", { email: getSession()?.email });
+      handleLogout(true);
+    }
+  }, INACTIVITY_LIMIT);
+}
+
+document.addEventListener("mousemove", resetInactivity);
+document.addEventListener("keydown", resetInactivity);
+document.addEventListener("click", resetInactivity);
+document.addEventListener("touchstart", resetInactivity);
+
+/* ============================================================
+   PAGE ROUTING
+   ============================================================ */
+const pages = ["page-login","page-login-otp","page-signup","page-signup-otp","page-forgot"];
+
+function showPage(id) {
+  pages.forEach(p => {
+    const el = document.getElementById(p);
+    el.classList.remove("active");
+  });
+  const target = document.getElementById(id);
+  if (target) target.classList.add("active");
+  clearMessages();
+}
+
+function showDashboard(user) {
+  pages.forEach(p => document.getElementById(p).classList.remove("active"));
+  const dash = document.getElementById("dashboard-page");
+  dash.classList.add("active");
+  document.getElementById("dash-username").textContent = user.name || user.email;
+  document.getElementById("dash-avatar").textContent = (user.name || user.email)[0].toUpperCase();
+  document.getElementById("secure-frame").src = PORTAL_URL;
+  history.pushState({ page: "dashboard" }, "", "/dashboard");
+  resetInactivity();
+}
+
+function hideDashboard() {
+  document.getElementById("dashboard-page").classList.remove("active");
+  document.getElementById("secure-frame").src = "";
+  history.pushState({ page: "login" }, "", "/");
+  showPage("page-login");
+}
+
+window.addEventListener("popstate", (e) => {
+  if (!getSession()) hideDashboard();
+});
+
+/* ============================================================
+   MESSAGES
+   ============================================================ */
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = `msg msg-${type} show`;
+  el.innerHTML = `<span>${type==="error"?"⚠":"✓"}</span> ${text}`;
+}
+function hideMsg(id) {
+  const el = document.getElementById(id);
+  el.className = "msg";
+}
+function clearMessages() {
+  document.querySelectorAll(".msg").forEach(el => el.className = "msg");
+}
+
+/* ============================================================
+   BUTTON LOADING STATE
+   ============================================================ */
+function setLoading(btnId, state) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (state) btn.classList.add("loading");
+  else btn.classList.remove("loading");
+  btn.disabled = state;
+}
+
+/* ============================================================
+   TOGGLE PASSWORD
+   ============================================================ */
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === "password") {
+    inp.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    inp.type = "password";
+    btn.textContent = "👁";
+  }
+}
+
+/* ============================================================
+   PASSWORD STRENGTH
+   ============================================================ */
+function checkPwStrength(input, barId) {
+  const val = input.value;
+  const bar = document.getElementById(barId);
+  if (!bar) return;
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const colors = ["#fc8181","#f6ad55","#63b3ed","#68d391"];
+  const widths = ["25%","50%","75%","100%"];
+  bar.style.width = val ? widths[score-1] || "10%" : "0%";
+  bar.style.background = val ? colors[score-1] || "#fc8181" : "";
+}
+
+/* ============================================================
+   OTP INPUT BOXES
+   ============================================================ */
+function initOtpBoxes(rowId) {
+  const boxes = document.querySelectorAll(`#${rowId} .otp-box`);
+  boxes.forEach((box, i) => {
+    box.value = "";
+    box.classList.remove("filled");
+    box.addEventListener("input", (e) => {
+      const val = e.target.value.replace(/[^0-9]/g, "");
+      box.value = val.slice(-1);
+      box.classList.toggle("filled", !!box.value);
+      if (box.value && i < boxes.length - 1) boxes[i+1].focus();
+    });
+    box.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !box.value && i > 0) {
+        boxes[i-1].focus();
+        boxes[i-1].value = "";
+        boxes[i-1].classList.remove("filled");
+      }
+    });
+    box.addEventListener("paste", (e) => {
+      const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
+      if (pasted.length >= 6) {
+        e.preventDefault();
+        [...pasted.slice(0,6)].forEach((ch, idx) => {
+          boxes[idx].value = ch;
+          boxes[idx].classList.add("filled");
+        });
+        boxes[5].focus();
+      }
+    });
+  });
+}
+
+function getOtpValue(rowId) {
+  return [...document.querySelectorAll(`#${rowId} .otp-box`)].map(b => b.value).join("");
+}
+
+/* ============================================================
+   OTP COUNTDOWN TIMER
+   ============================================================ */
+const timerRefs = {};
+
+function startTimer(countdownId, resendBtnId, duration = 600) {
+  if (timerRefs[countdownId]) clearInterval(timerRefs[countdownId]);
+  const countdown = document.getElementById(countdownId);
+  const resendBtn = document.getElementById(resendBtnId);
+  if (resendBtn) resendBtn.disabled = true;
+  let remaining = duration;
+
+  const tick = () => {
+    const m = String(Math.floor(remaining / 60)).padStart(2, "0");
+    const s = String(remaining % 60).padStart(2, "0");
+    if (countdown) countdown.textContent = `${m}:${s}`;
+    if (remaining <= 0) {
+      clearInterval(timerRefs[countdownId]);
+      if (countdown) countdown.textContent = "00:00";
+      if (resendBtn) resendBtn.disabled = false;
+    }
+    remaining--;
+  };
+
+  tick();
+  timerRefs[countdownId] = setInterval(tick, 1000);
+}
+
+function stopTimer(countdownId) {
+  if (timerRefs[countdownId]) clearInterval(timerRefs[countdownId]);
+}
+
+/* ============================================================
+   RESEND OTP
+   ============================================================ */
+async function resendOtp(session) {
+  const btn = document.getElementById(`${session}-resend-btn`);
+  if (btn) btn.disabled = true;
+
+  let email = "", name = "", context = "";
+
+  if (session === "login") {
+    const p = getPendingLogin();
+    email = p?.email || "";
+    name = p?.name || email;
+    context = "Login Verification";
+  } else if (session === "signup") {
+    email = document.getElementById("signup-email").value.trim();
+    name = document.getElementById("signup-name").value.trim();
+    context = "Email Verification";
+  } else if (session === "forgot") {
+    email = document.getElementById("forgot-email").value.trim();
+    context = "Password Reset";
+  }
+
+  const otp = generateOTP();
+  storeOtp(session, otp, email);
+  const sent = await sendOtpEmail(email, name, otp, context);
+
+  const msgId = `${session === "forgot" ? "forgot" : session}-otp-msg`;
+  const countdownId = `${session}-otp-countdown`;
+  const resendId = `${session}-resend-btn`;
+
+  if (sent) {
+    showMsg(msgId || "forgot-msg", "info", "A new code was sent to your email.");
+  } else {
+    showMsg(msgId || "forgot-msg", "error", "Could not send code. Check EmailJS config.");
+  }
+
+  startTimer(countdownId, resendId);
+  notifyAdmin(`OTP Resent - ${context}`, { email, context });
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+async function handleLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const remember = document.getElementById("remember-me").checked;
+
+  if (!email || !password) {
+    showMsg("login-msg", "error", "Please enter your email and password.");
+    return;
+  }
+
+  setLoading("login-btn", true);
+
+  const users = getUsers();
+  console.log('[NexCore] Total stored users:', users.length);
+  console.log('[NexCore] Looking for email:', email);
+  console.log('[NexCore] Stored emails:', users.map(u => u.email));
+
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    setTimeout(() => {
+      showMsg("login-msg", "error", "No account found with this email. Please sign up.");
+      setLoading("login-btn", false);
+      notifyAdmin("Login Failed", { email, reason: "User not found" });
+    }, 800);
+    return;
+  }
+
+  console.log('[NexCore] Stored hash :', user.password);
+  console.log('[NexCore] Entered hash:', simpleHash(password));
+  console.log('[NexCore] Hash match  :', user.password === simpleHash(password));
+
+  if (user.password !== simpleHash(password)) {
+    setTimeout(() => {
+      showMsg("login-msg", "error", "Incorrect password. Please try again.");
+      setLoading("login-btn", false);
+      notifyAdmin("Login Failed", { email, reason: "Wrong password" });
+    }, 800);
+    return;
+  }
+
+  // Send OTP
+  const otp = generateOTP();
+  storeOtp("login", otp, email);
+  const sent = await sendOtpEmail(email, user.name, otp, "Login Verification");
+
+  setLoading("login-btn", false);
+
+  if (!sent) {
+    showMsg("login-msg", "error", "Could not send OTP. Check EmailJS configuration.");
+    return;
+  }
+
+  setPendingLogin({ email, name: user.name, remember });
+  notifyAdmin("Login OTP Sent", { email, name: user.name });
+
+  document.getElementById("login-otp-hint").textContent = `Code sent to ${email}`;
+  initOtpBoxes("login-otp-row");
+  startTimer("login-otp-countdown", "login-resend-btn");
+  showPage("page-login-otp");
+
+  if (remember) localStorage.setItem("nexcore_remember", JSON.stringify({ email }));
+}
+
+async function verifyLoginOtp() {
+  const entered = getOtpValue("login-otp-row");
+  if (entered.length < 6) {
+    showMsg("login-otp-msg", "error", "Please enter all 6 digits.");
+    return;
+  }
+
+  setLoading("login-otp-btn", true);
+
+  await delay(600);
+  const result = validateOtp("login", entered);
+
+  if (!result.ok) {
+    showMsg("login-otp-msg", "error", result.reason);
+    setLoading("login-otp-btn", false);
+    notifyAdmin("Login OTP Failed", { reason: result.reason });
+    return;
+  }
+
+  const pending = getPendingLogin();
+  const users = getUsers();
+  const user = users.find(u => u.email === pending?.email);
+
+  if (!user) {
+    showMsg("login-otp-msg", "error", "Session expired. Please login again.");
+    setLoading("login-otp-btn", false);
+    return;
+  }
+
+  // Save last login timestamp
+  user.lastLogin = new Date().toISOString();
+  saveUsers(users);
+
+  // Clear pending login data, then create real session
+  _removeRaw(PENDING_KEY);
+  setSession({ email: user.email, name: user.name, loggedAt: Date.now() });
+  notifyAdmin("Login Success", { email: user.email, name: user.name, time: new Date().toLocaleString() });
+
+  setLoading("login-otp-btn", false);
+  showDashboard(user);
+}
+
+/* ============================================================
+   SIGN UP
+   ============================================================ */
+async function handleSignup() {
+  const name = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+  const confirm = document.getElementById("signup-confirm").value;
+
+  if (!name || !email || !password || !confirm) {
+    showMsg("signup-msg", "error", "All fields are required.");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showMsg("signup-msg", "error", "Please enter a valid email address.");
+    return;
+  }
+  if (password.length < 8) {
+    showMsg("signup-msg", "error", "Password must be at least 8 characters.");
+    return;
+  }
+  if (password !== confirm) {
+    showMsg("signup-msg", "error", "Passwords do not match.");
+    return;
+  }
+
+  const users = getUsers();
+  if (users.find(u => u.email === email)) {
+    showMsg("signup-msg", "error", "An account with this email already exists.");
+    return;
+  }
+
+  setLoading("signup-btn", true);
+
+  const otp = generateOTP();
+  storeOtp("signup", otp, email);
+  const sent = await sendOtpEmail(email, name, otp, "Account Verification");
+
+  setLoading("signup-btn", false);
+
+  if (!sent) {
+    showMsg("signup-msg", "error", "Could not send verification email. Check EmailJS config.");
+    return;
+  }
+
+  document.getElementById("signup-otp-hint").textContent = `Code sent to ${email}`;
+  initOtpBoxes("signup-otp-row");
+  startTimer("signup-otp-countdown", "signup-resend-btn");
+  notifyAdmin("New Signup Initiated", { name, email });
+  showPage("page-signup-otp");
+}
+
+async function verifySignupOtp() {
+  const entered = getOtpValue("signup-otp-row");
+  if (entered.length < 6) {
+    showMsg("signup-otp-msg", "error", "Please enter all 6 digits.");
+    return;
+  }
+
+  setLoading("signup-otp-btn", true);
+  await delay(600);
+
+  const result = validateOtp("signup", entered);
+
+  if (!result.ok) {
+    showMsg("signup-otp-msg", "error", result.reason);
+    setLoading("signup-otp-btn", false);
+    notifyAdmin("Signup OTP Failed", { email: document.getElementById("signup-email").value });
+    return;
+  }
+
+  const name = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+
+  const users = getUsers();
+  users.push({
+    name,
+    email,
+    password: simpleHash(password),
+    createdAt: new Date().toISOString(),
+    lastLogin: null
+  });
+  saveUsers(users);
+
+  notifyAdmin("New Account Created", { name, email, time: new Date().toLocaleString() });
+  setLoading("signup-otp-btn", false);
+
+  showMsg("signup-otp-msg", "success", "Account created! Redirecting to sign in...");
+  setTimeout(() => {
+    showPage("page-login");
+    showMsg("login-msg", "success", "Account created successfully! Please sign in.");
+  }, 1500);
+}
+
+/* ============================================================
+   FORGOT PASSWORD
+   ============================================================ */
+async function handleForgot() {
+  const email = document.getElementById("forgot-email").value.trim();
+
+  if (!email) {
+    showMsg("forgot-msg", "error", "Please enter your email address.");
+    return;
+  }
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    showMsg("forgot-msg", "error", "No account found with this email.");
+    return;
+  }
+
+  setLoading("forgot-btn", true);
+
+  const otp = generateOTP();
+  storeOtp("forgot", otp, email);
+  const sent = await sendOtpEmail(email, user.name, otp, "Password Reset");
+
+  setLoading("forgot-btn", false);
+
+  if (!sent) {
+    showMsg("forgot-msg", "error", "Could not send reset code. Check EmailJS config.");
+    return;
+  }
+
+  notifyAdmin("Forgot Password Requested", { email, name: user.name });
+
+  document.getElementById("forgot-step-email").style.display = "none";
+  document.getElementById("forgot-step-otp").style.display = "block";
+  document.getElementById("forgot-step1").classList.add("done");
+  document.getElementById("forgot-step2").classList.add("active");
+  initOtpBoxes("forgot-otp-row");
+  startTimer("forgot-otp-countdown", "forgot-resend-btn");
+  showMsg("forgot-msg", "info", `Reset code sent to ${email}`);
+}
+
+async function verifyForgotOtp() {
+  const entered = getOtpValue("forgot-otp-row");
+  if (entered.length < 6) {
+    showMsg("forgot-msg", "error", "Please enter all 6 digits.");
+    return;
+  }
+
+  setLoading("forgot-otp-btn", true);
+  await delay(600);
+
+  const result = validateOtp("forgot", entered);
+
+  if (!result.ok) {
+    showMsg("forgot-msg", "error", result.reason);
+    setLoading("forgot-otp-btn", false);
+    return;
+  }
+
+  hideMsg("forgot-msg");
+  document.getElementById("forgot-step-otp").style.display = "none";
+  document.getElementById("forgot-step-pw").style.display = "block";
+  document.getElementById("forgot-step2").classList.add("done");
+  document.getElementById("forgot-step3").classList.add("active");
+  setLoading("forgot-otp-btn", false);
+}
+
+async function handlePasswordReset() {
+  const newPw = document.getElementById("forgot-new-pw").value;
+  const confirm = document.getElementById("forgot-confirm-pw").value;
+  const email = document.getElementById("forgot-email").value.trim();
+
+  if (!newPw || !confirm) {
+    showMsg("forgot-msg", "error", "Please fill both password fields.");
+    return;
+  }
+  if (newPw.length < 8) {
+    showMsg("forgot-msg", "error", "Password must be at least 8 characters.");
+    return;
+  }
+  if (newPw !== confirm) {
+    showMsg("forgot-msg", "error", "Passwords do not match.");
+    return;
+  }
+
+  setLoading("forgot-reset-btn", true);
+  await delay(600);
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    showMsg("forgot-msg", "error", "User not found. Please try again.");
+    setLoading("forgot-reset-btn", false);
+    return;
+  }
+
+  user.password = simpleHash(newPw);
+  saveUsers(users);
+
+  notifyAdmin("Password Reset Success", { email, time: new Date().toLocaleString() });
+  setLoading("forgot-reset-btn", false);
+
+  showMsg("forgot-msg", "success", "Password reset successfully! Redirecting...");
+  setTimeout(() => {
+    showPage("page-login");
+    showMsg("login-msg", "success", "Password updated. Please sign in with your new password.");
+  }, 2000);
+}
+
+/* ============================================================
+   SOCIAL LOGIN (UI ONLY)
+   ============================================================ */
+function socialLogin(provider) {
+  showMsg("login-msg", "info", `${provider} login is not configured yet. Please use email & password.`);
+}
+
+/* ============================================================
+   LOGOUT
+   ============================================================ */
+function handleLogout(auto = false) {
+  const s = getSession();
+  notifyAdmin(auto ? "Auto Logout (Inactivity)" : "User Logout", {
+    email: s?.email,
+    name: s?.name,
+    time: new Date().toLocaleString()
+  });
+  clearSession();
+  hideDashboard();
+}
+
+/* ============================================================
+   SESSION CHECK ON LOAD
+   ============================================================ */
+function checkSession() {
+  const session = getSession();
+  if (session) {
+    if (Date.now() - session.lastActivity > INACTIVITY_LIMIT) {
+      clearSession();
+      return false;
+    }
+    const users = getUsers();
+    const user = users.find(u => u.email === session.email);
+    if (user) {
+      showDashboard(user);
+      return true;
+    }
+  }
+
+  // Check remember me
+  try {
+    const rem = JSON.parse(localStorage.getItem("nexcore_remember") || "null");
+    if (rem?.email) {
+      document.getElementById("login-email").value = rem.email;
+      document.getElementById("remember-me").checked = true;
+    }
+  } catch {}
+
+  return false;
+}
+
+/* ============================================================
+   SECURITY: ANTI-DEVTOOLS & SHORTCUT BLOCKING
+   ============================================================ */
+const BLOCKED_SHORTCUTS = [
+  { key: "F12" },
+  { key: "I", ctrl: true, shift: true },
+  { key: "J", ctrl: true, shift: true },
+  { key: "C", ctrl: true, shift: true },
+  { key: "U", ctrl: true },
+  { key: "S", ctrl: true },
+  { key: "P", ctrl: true },
+  { key: "A", ctrl: true, shift: true }
+];
+
+document.addEventListener("keydown", (e) => {
+  const isProtectedField = ["INPUT","TEXTAREA"].includes(e.target.tagName);
+  const key = e.key.toUpperCase();
+
+  const blocked = BLOCKED_SHORTCUTS.some(s => {
+    const keyMatch = key === s.key.toUpperCase();
+    const ctrlMatch = s.ctrl ? (e.ctrlKey || e.metaKey) : true;
+    const shiftMatch = s.shift ? e.shiftKey : true;
+    return keyMatch && ctrlMatch && shiftMatch;
+  });
+
+  if (blocked) {
+    e.preventDefault();
+    e.stopPropagation();
+    const isDash = !!getSession();
+    if (isDash) {
+      notifyAdmin("Blocked Shortcut Attempt", {
+        key: e.key,
+        ctrl: e.ctrlKey,
+        shift: e.shiftKey,
+        email: getSession()?.email
+      });
+    }
+    return false;
+  }
+});
+
+// Right-click: only block on dashboard/protected content
+document.addEventListener("contextmenu", (e) => {
+  const tag = e.target.tagName;
+  const isForm = ["INPUT","TEXTAREA","SELECT"].includes(tag) || e.target.closest(".otp-box");
+  if (isForm) return; // allow on form elements
+  if (getSession()) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Basic devtools detection
+let devtoolsOpen = false;
+const threshold = 160;
+setInterval(() => {
+  if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+    if (!devtoolsOpen && getSession()) {
+      devtoolsOpen = true;
+      notifyAdmin("Suspicious: DevTools Detected", { email: getSession()?.email, time: new Date().toLocaleString() });
+    }
+  } else {
+    devtoolsOpen = false;
+  }
+}, 3000);
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ============================================================
+   KEYBOARD: ENTER KEY SUBMIT
+   ============================================================ */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const active = document.querySelector(".page.active");
+  if (!active) return;
+  const id = active.id;
+  if (id === "page-login") handleLogin();
+  else if (id === "page-login-otp") verifyLoginOtp();
+  else if (id === "page-signup") handleSignup();
+  else if (id === "page-signup-otp") verifySignupOtp();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener("load", () => {
+  initOtpBoxes("login-otp-row");
+  initOtpBoxes("signup-otp-row");
+  initOtpBoxes("forgot-otp-row");
+
+  // Bust user cache — force fresh read from storage on every load
+  _userCache = null;
+
+  // Clean up any corrupted data from old storage keys (one-time migration)
+  try {
+    const hadOldData = localStorage.getItem("nexcore_users") || localStorage.getItem("nexcore_users_v2_bak");
+    if (!hadOldData) {
+      // First ever load or clean slate — nothing to migrate
+    }
+    // Remove ALL old-format keys to prevent confusion
+    ["nexcore_users", "nexcore_session", "nexcore_pending_login"].forEach(k => {
+      try { localStorage.removeItem(k); } catch(e) {}
+    });
+  } catch(e) {}
+
+  checkSession();
+
+  setTimeout(() => {
+    document.getElementById("global-loader").classList.add("hidden");
+  }, 800);
+});
+
+/* ============================================================
+   DOWNLOAD PROXY — Fix iframe cross-origin download blocking
+   ============================================================ */
+function showDownloadToast(title, sub) {
+  const toast = document.getElementById("download-toast");
+  document.getElementById("toast-title").textContent = title || "Downloading file...";
+  document.getElementById("toast-sub").textContent = sub || "Your file is ready";
+  toast.style.transform = "translateY(0)";
+  toast.style.opacity = "1";
+  setTimeout(() => {
+    toast.style.transform = "translateY(100px)";
+    toast.style.opacity = "0";
+  }, 3500);
+}
+
+// Intercept clicks inside iframe that trigger downloads
+document.getElementById("secure-frame").addEventListener("load", function() {
+  try {
+    const iframeDoc = this.contentDocument || this.contentWindow.document;
+    iframeDoc.addEventListener("click", function(e) {
+      const anchor = e.target.closest("a[download], a[href$='.bmp'], a[href$='.png'], a[href$='.jpg'], a[href$='.pdf'], a[href$='.zip'], a[href$='.csv']");
+      const btn = e.target.closest("button");
+      if (anchor) {
+        const href = anchor.href || anchor.getAttribute("href");
+        if (href && href !== "#") {
+          e.preventDefault();
+          proxyDownload(href, anchor.getAttribute("download") || getFilenameFromUrl(href));
+        }
+      }
+    });
+  } catch(err) {
+    // Cross-origin: cannot access iframe DOM directly, use postMessage listener instead
+  }
+});
+
+// Listen for postMessage download requests from iframe content
+window.addEventListener("message", function(e) {
+  if (!e.data) return;
+  if (e.data.type === "DOWNLOAD_REQUEST") {
+    proxyDownload(e.data.url, e.data.filename);
+  }
+  if (e.data.type === "DOWNLOAD_BLOB") {
+    // If iframe sends a base64 blob
+    try {
+      const { base64, mimeType, filename } = e.data;
+      const byteChars = atob(base64);
+      const byteArr = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteArr], { type: mimeType });
+      triggerBlobDownload(blob, filename);
+    } catch(err) { console.warn("Blob download error:", err); }
+  }
+});
+
+async function proxyDownload(url, filename) {
+  if (!url) return;
+  showDownloadToast("Preparing download...", "Fetching your file");
+  try {
+    // Try fetch proxy first (works for same-origin or CORS-enabled resources)
+    const resp = await fetch(url, { mode: "cors" });
+    if (!resp.ok) throw new Error("Fetch failed: " + resp.status);
+    const blob = await resp.blob();
+    triggerBlobDownload(blob, filename || getFilenameFromUrl(url));
+  } catch (err) {
+    // Fallback: open in new tab so browser native download takes over
+    console.warn("Proxy fetch failed, falling back to new tab:", err);
+    showDownloadToast("Opening download...", "File opening in new tab");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || getFilenameFromUrl(url);
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
+
+function triggerBlobDownload(blob, filename) {
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename || "download";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  showDownloadToast("Download complete!", "File saved to your downloads folder");
+}
+
+function getFilenameFromUrl(url) {
+  try {
+    return new URL(url).pathname.split("/").pop() || "download";
+  } catch {
+    return url.split("/").pop() || "download";
+  }
+}
+
+
+/* ============================================================
+   DEBUG PANEL — shows stored accounts, helps diagnose issues
+   ============================================================ */
+function showDebugPanel() {
+  const users = getUsers();
+  const existing = document.getElementById('debug-panel');
+  if (existing) { existing.remove(); return; }
+
+  const panel = document.createElement('div');
+  panel.id = 'debug-panel';
+  panel.style.cssText = `position:fixed;bottom:80px;right:20px;z-index:99999;
+    background:rgba(10,16,28,0.97);border:1px solid rgba(99,179,237,0.4);
+    border-radius:14px;padding:20px;min-width:320px;max-width:420px;
+    font-family:'DM Sans',sans-serif;font-size:12px;color:#e8edf5;
+    box-shadow:0 16px 48px rgba(0,0,0,0.7);backdrop-filter:blur(20px);`;
+
+  const storageWorks = (() => {
+    try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return '✅ Working'; }
+    catch(e) { return '❌ Blocked: ' + e.message; }
+  })();
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#63b3ed;">⬡ Storage Debug</span>
+      <button onclick="document.getElementById('debug-panel').remove()" style="background:none;border:none;color:#8896a9;cursor:pointer;font-size:18px;line-height:1;">×</button>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="color:#8896a9;margin-bottom:4px;">LocalStorage</div>
+      <div style="color:${storageWorks.includes('✅')?'#68d391':'#fc8181'}">${storageWorks}</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="color:#8896a9;margin-bottom:6px;">Registered Accounts (${users.length})</div>
+      ${users.length === 0
+        ? '<div style="color:#fc8181">No accounts found in this browser/file</div>'
+        : users.map(u => `
+          <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;margin-top:6px;">
+            <div style="color:#e8edf5;font-weight:500;">${u.name}</div>
+            <div style="color:#63b3ed;">${u.email}</div>
+            <div style="color:#8896a9;">Created: ${u.createdAt ? new Date(u.createdAt).toLocaleString() : 'unknown'}</div>
+            <div style="color:#8896a9;">Hash prefix: ${(u.password||'').substring(0,12)}...</div>
+          </div>`).join('')
+      }
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="exportUsers()" style="padding:8px;background:rgba(99,179,237,0.1);border:1px solid rgba(99,179,237,0.3);border-radius:8px;color:#63b3ed;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;">⬇ Export Users</button>
+      <button onclick="importUsersPrompt()" style="padding:8px;background:rgba(104,211,145,0.1);border:1px solid rgba(104,211,145,0.3);border-radius:8px;color:#68d391;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;">⬆ Import Users</button>
+      <button onclick="clearAllData()" style="padding:8px;background:rgba(252,129,129,0.1);border:1px solid rgba(252,129,129,0.3);border-radius:8px;color:#fc8181;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;">🗑 Clear All</button>
+      <button onclick="document.getElementById('debug-panel').remove()" style="padding:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8896a9;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;">Close</button>
+    </div>
+    <div style="margin-top:10px;color:#4a5568;font-size:10px;text-align:center;">
+      Press Ctrl+Shift+D to open/close this panel
+    </div>`;
+
+  document.body.appendChild(panel);
+}
+
+function exportUsers() {
+  const users = getUsers();
+  const blob = new Blob([JSON.stringify(users, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nexcore_users_backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importUsersPrompt() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!Array.isArray(imported)) throw new Error('Invalid format');
+        const existing = getUsers();
+        // Merge: imported users override existing ones with same email
+        const merged = [...existing];
+        imported.forEach(imp => {
+          const idx = merged.findIndex(u => u.email === imp.email);
+          if (idx >= 0) merged[idx] = imp;
+          else merged.push(imp);
+        });
+        saveUsers(merged);
+        alert(`✅ Imported ${imported.length} accounts. ${merged.length} total accounts now stored.`);
+        document.getElementById('debug-panel')?.remove();
+      } catch(err) {
+        alert('❌ Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (!confirm('Clear ALL stored users and sessions? This cannot be undone.')) return;
+  _removeRaw(STORAGE_KEY);
+  _removeRaw(SESSION_KEY);
+  _removeRaw(PENDING_KEY);
+  _userCache = null;
+  document.getElementById('debug-panel')?.remove();
+  location.reload();
+}
+
+// Ctrl+Shift+D opens debug panel (won't trigger blocked-key alert since it's a different combo)
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+    e.preventDefault();
+    showDebugPanel();
+  }
+});
+
+</script>
+</body>
+</html>
